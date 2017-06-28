@@ -1,1 +1,0 @@
-UPDATE survey_score_interval SET min='17' WHERE id='8';

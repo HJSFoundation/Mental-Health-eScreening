@@ -1,1 +1,0 @@
-INSERT template_type (template_type_id, name, description) VALUES (10, 'Assessment Welcome', 'Template used to generate the welcome message shown to veterans when starting assessment. Associated with a Battery.');

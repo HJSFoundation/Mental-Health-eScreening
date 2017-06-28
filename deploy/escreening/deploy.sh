@@ -70,22 +70,6 @@ git tag $stamp
 
 printf "\nCreated tag $stamp\n\n"
 
-# ask if they want to rebuild the DB 
-printf "\nShould the current database be deleted and rebuilt\n***********************************\n** WARNING ALL DATA WILL BE LOST **\n***********************************\nEnter 'YeS' to rebuild database and lose all data.\n\n"
-read rebuildDb
-
-extraParams=""
-if [ "$rebuildDb" == "YeS" ]; then
-	extraParams="\"-Drecreate_db=true\""
-
-	printf "\nShould test data be inserted into the new database? (Enter 'y' to include)\n"
-	read includeTestData
-
-	if [ "$includeTestData" != "y" ]; then
-		extraParams="${extraParams} \"-Ddb.skip.testData=true\""
-	fi
-fi
-
 printf "\nBuilding WAR...\n\n"
 mvn --quiet clean package -P$profile -DskipTests \
 "-Djdbc.username=$jdbcUsername" \
@@ -99,7 +83,7 @@ mvn --quiet clean package -P$profile -DskipTests \
 "-Dvista.encrypt=$vistaEncrypted" \
 "-Dquick.order.ien=$quickOrderIen" \
 "-Dref.tbi.service.name=$refTbiServiceName" \
-"-Dsample.patient.ien=$samplePatientIen" $extraParams
+"-Dsample.patient.ien=$samplePatientIen"
 
 
 printf "\n\nIf there are no errors, please stop service tomcat-$instance then hit enter to continue\n\n"

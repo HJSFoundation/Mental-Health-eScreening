@@ -83,9 +83,13 @@ public class AssessmentVariableController {
 		if (surveyId == null || surveyId < 0) {
 			ErrorBuilder.throwing(EntityNotFoundException.class).toUser("Invalid or missing module ID.  Please contact your system administrator.").toAdmin("The survey id passed in is 0 or null").setCode(ErrorCodeEnum.OBJECT_NOT_FOUND.getValue()).throwIt();
 		}
+		
+		logger.warn("SurveyId for assessment variables:" + surveyId);
 
         Table<String, String, Object> t = avs.getAssessmentVarsForSurvey(surveyId, true, false);
-
+		
+		logger.warn("Assessment Variables are empty:" + t.isEmpty());
+		
 		if (t.isEmpty()) {
 			ErrorBuilder
 				.throwing(EntityNotFoundException.class)
@@ -148,6 +152,8 @@ public class AssessmentVariableController {
 
 		List<Map<String, Object>> avs = Lists.newArrayList();
 
+		logger.warn("Table Size:" + t.size());
+		
 		for (String rowKey : t.rowKeySet()) {
 			Map<String, Object> m = Maps.newHashMap(t.row(rowKey)); // need HashMap as it allows nulls as key or values
 
@@ -160,6 +166,8 @@ public class AssessmentVariableController {
 			}
 			avs.add(m);
 		}
+		
+		logger.warn("AVS List Size:" + avs.size());
 
 		return avs;
 	}

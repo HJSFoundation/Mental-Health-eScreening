@@ -445,7 +445,7 @@ public class VeteranAssessmentRepositoryImpl extends AbstractHibernateRepository
         Query q = entityManager.createNativeQuery("SELECT " +
                 "count(*) " +
                 "FROM " +
-                "veteran_assessment va, clinic c, user u " +
+                "veteran_assessment va, clinic c, [user] u " +
                 "WHERE va.assessment_status_id <> 7 AND " +
                 "va.clinic_id = c.clinic_id AND " +
                 "va.clinician_id = u.user_id AND " +
@@ -453,10 +453,10 @@ public class VeteranAssessmentRepositoryImpl extends AbstractHibernateRepository
                 "va.clinic_id IN (:clinicIds) " +
                 "GROUP BY c.clinic_id , u.user_id");
         setParametersFor593(q, fromDate, toDate, clinicIds);
-        final List<BigInteger> resultList = q.getResultList();
+        final List<?> resultList = q.getResultList(); //Result could contain Integer or BigInteger
 
         float sum = 0;
-        for (BigInteger assessmentCnt : resultList) {
+        for (Object assessmentCnt : resultList) {
             sum += Float.parseFloat(assessmentCnt.toString());
         }
         float avgNumOfAssessmentPerClinicianClinicFor593= resultList.isEmpty() ? 0.0f : sum / Float.valueOf(resultList.size());
@@ -465,13 +465,13 @@ public class VeteranAssessmentRepositoryImpl extends AbstractHibernateRepository
 
     @Override
     public List<Report593ByDayDTO> getBatteriesByDayFor593(String fromDate, String toDate, List<Integer> clinicIds) {
-        Query q = entityManager.createNativeQuery("SELECT date_format(date_completed, '%m/%d/%Y'), date_format(date_completed, '%W'), " +
-                " count(*)" +
+        Query q = entityManager.createNativeQuery("SELECT CONVERT(VARCHAR, date_completed, 101) [string_date_completed], CAST(DATENAME(weekday, date_completed) as VARCHAR) [weekday], " +
+                " count(*) [count] " +
                 " FROM veteran_assessment " +
                 " WHERE assessment_status_id <> 7 AND date_completed >= :fromDate AND date_completed <= :toDate " +
                 "AND clinic_id IN (:clinicIds) AND date_completed IS NOT NULL " +
-                "GROUP BY date_format( date_completed, '%Y%m%d' ) " +
-                "ORDER BY date_format( date_completed, '%Y%m%d' ) ");
+                "GROUP BY CONVERT(VARCHAR, date_completed, 101), CAST(DATENAME(weekday, date_completed) as VARCHAR) " +
+                "ORDER BY CONVERT(VARCHAR, date_completed, 101) ");
 
         setParametersFor593(q, fromDate, toDate, clinicIds);
 
@@ -493,14 +493,14 @@ public class VeteranAssessmentRepositoryImpl extends AbstractHibernateRepository
         HashMap<String, Report593ByTimeDTO> cache = new HashMap<>();
         Report593ByTimeDTO dto = null;
 
-        Query q = entityManager.createNativeQuery("SELECT date_format(date_completed, '%m/%d/%Y'), date_format(date_completed, '%W'), " +
-                " count(*)" +
+        Query q = entityManager.createNativeQuery("SELECT CONVERT(VARCHAR, date_completed, 101) [string_date_completed], CAST(DATENAME(weekday, date_completed) as VARCHAR) [weekday], " +
+                " count(*) [count] " +
                 " FROM veteran_assessment " +
                 " WHERE assessment_status_id <> 7 AND date_completed >= :fromDate AND date_completed <= :toDate " +
                 "AND clinic_id IN (:clinicIds) AND date_completed IS NOT NULL " +
-                "AND  extract(HOUR FROM date_completed) >= :fr AND extract(HOUR FROM date_completed) <= :to " +
-                "GROUP BY date_format( date_completed, '%Y%m%d' ) " +
-                "ORDER BY date_format( date_completed, '%Y%m%d' ) ");
+                "AND  DATEPART(hour, date_completed) >= :fr AND DATEPART(hour, date_completed) <= :to " +
+                "GROUP BY CONVERT(VARCHAR, date_completed, 101), CAST(DATENAME(weekday, date_completed) as VARCHAR) " +
+                "ORDER BY CONVERT(VARCHAR, date_completed, 101) ");
         setParametersFor593(q, fromDate, toDate, clinicIds);
 
 
@@ -791,10 +791,10 @@ public class VeteranAssessmentRepositoryImpl extends AbstractHibernateRepository
 
     @Override
     public List<Number> getAgeStatistics(List<Integer> cList, String fromDate, String toDate) {
-
+		//Note: 101 in CONVERT function is mm/dd/yyyy
         Query q = entityManager.createNativeQuery(
-                "SELECT avg(datediff(CURDATE(), STR_TO_DATE(text_value, '%m/%d/%Y'))/365), min(datediff(CURDATE(), STR_TO_DATE(text_value, '%m/%d/%Y'))/365), " +
-                        "max(datediff(CURDATE(), STR_TO_DATE(text_value, '%m/%d/%Y'))/365)" +
+                "SELECT avg(datediff(day, CAST(GETDATE() as DATE), CONVERT(DATE, text_value, 101))/365) [avg], min(datediff(day, CAST(GETDATE() as DATE), CONVERT(DATE, text_value, 101))/365) [min], " +
+                        "max(datediff(day, CAST(GETDATE() as DATE), CONVERT(DATE, text_value, 101))/365) [max]" +
                         " FROM survey_measure_response WHERE measure_answer_id = 170 " +
                         " AND text_value IS NOT NULL AND veteran_assessment_id IN " +
                         "(SELECT veteran_assessment_id FROM veteran_assessment WHERE " +
@@ -826,7 +826,7 @@ public class VeteranAssessmentRepositoryImpl extends AbstractHibernateRepository
     @Override
     public List<Number> getNumOfDeploymentStatistics(List<Integer> cList, String fromDate, String toDate) {
         Query q = entityManager.createNativeQuery(
-                "SELECT avg(numOfDeployment), min(numOfDeployment), max(numOfDeployment) FROM (SELECT count(*) AS numOfDeployment" +
+                "SELECT avg(numOfDeployment) [avg], min(numOfDeployment) [min], max(numOfDeployment) [max] FROM (SELECT count(*) AS numOfDeployment" +
                         " FROM survey_measure_response WHERE measure_answer_id = 1210 " +
                         " AND text_value IS NOT NULL AND veteran_assessment_id IN (SELECT veteran_assessment_id FROM veteran_assessment WHERE assessment_status_id <> 7 AND clinic_id IN (:clinicIds) AND date_completed >= :fromDate " +
                         " AND date_completed <= :toDate AND date_completed IS NOT NULL)" +
