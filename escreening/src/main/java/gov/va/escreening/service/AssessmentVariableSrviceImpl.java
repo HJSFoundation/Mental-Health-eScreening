@@ -30,8 +30,6 @@ import javax.annotation.Resource;
 
 import gov.va.escreening.service.export.FormulaColumnsBldr;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +38,6 @@ import com.google.common.base.Strings;
 
 @Service("assessmentVariableService")
 public class AssessmentVariableSrviceImpl implements AssessmentVariableService {
-	private static final Logger logger = LoggerFactory.getLogger(AssessmentVariableSrviceImpl.class);
     private static final String FORMULA_FORMAT = "[%d]";
     
 	@Resource(name = "filterMeasureTypes")
@@ -231,8 +228,6 @@ public class AssessmentVariableSrviceImpl implements AssessmentVariableService {
 			filteredMeasures = filterMeasures(smList, filterMeasureTypes);
 		}
 		
-		logger.warn("Made it to filter survey. Survey id is:" + survey.getSurveyId() + ". The AV list size is:" + avList.size());
-		
 		for (AssessmentVariable av : avList) {
 			int avTypeId = av.getAssessmentVariableTypeId().getAssessmentVariableTypeId();
 			switch (avTypeId) {
@@ -261,8 +256,6 @@ public class AssessmentVariableSrviceImpl implements AssessmentVariableService {
 				throw new IllegalStateException(String.format("The AssessmentVariable type of %s is not supported", avTypeId));
 			}
 		}
-		
-		logger.warn("Made it past filterBySurvey!");
 	}
 
 	@Override
