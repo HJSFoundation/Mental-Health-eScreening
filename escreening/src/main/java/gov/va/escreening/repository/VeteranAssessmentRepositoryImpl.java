@@ -278,7 +278,9 @@ public class VeteranAssessmentRepositoryImpl extends AbstractHibernateRepository
 
     @Override
     public Date getDateModified(int veteranAssessmentId) {
-        String sql = "SELECT DATEDIFF(s, '1970-01-01 00:00:00', max(date_created)) as date_created, DATEDIFF(s, '1970-01-01 00:00:00', max(date_modified)) as date_modified FROM survey_measure_response WHERE veteran_assessment_id = :veteranAssessmentId";
+		//DATEADD and DATEDIFF are used to convert the stored datetimes from local to UTC. We want this result to be in UTC.
+		//The outer DATEDIFF is used to convert the date into seconds
+        String sql = "SELECT DATEDIFF(s, '1970-01-01', DATEADD(s, DATEDIFF(s, GETDATE(), GETUTCDATE()), max(date_created))) as date_created, DATEDIFF(s, '1970-01-01', DATEADD(s, DATEDIFF(s, GETDATE(), GETUTCDATE()), max(date_modified))) as date_modified FROM survey_measure_response WHERE veteran_assessment_id = :veteranAssessmentId";
 
         @SuppressWarnings("unchecked")
         List<Object[]> rows = entityManager.createNativeQuery(sql).setParameter("veteranAssessmentId", veteranAssessmentId).getResultList();
