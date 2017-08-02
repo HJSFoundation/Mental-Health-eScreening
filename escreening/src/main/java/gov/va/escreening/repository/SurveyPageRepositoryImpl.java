@@ -42,7 +42,7 @@ public class SurveyPageRepositoryImpl extends AbstractHibernateRepository<Survey
     public List<Object[]> getSuveyPageAnswerStatuses(int veteranAssessmentId){
         String sql = "SELECT "
                 + "all_pages.survey_page_id, "
-                + "ifnull(answered_pages.has_answer, 0) has_answer"
+                + "isnull(answered_pages.has_answer, 0) has_answer"
                 + " FROM"
                 + " ( "
                     + "SELECT sp.survey_page_id, ss.display_order, sp.page_number "
@@ -127,7 +127,7 @@ public class SurveyPageRepositoryImpl extends AbstractHibernateRepository<Survey
     private static final String SKIP_QUERY_FORMAT =
       "SELECT survey_page_measure_count.survey_page_id, case when survey_page_measure_count.measure_count <> survey_page_measure_count.respons_count then 1 else 0 end has_skipped "
       +"FROM ( " 
-            +"SELECT survey_page_id, count(survey_page_id) measure_count, sum(measure_compare.measure_id = measure_compare.response) respons_count " 
+            +"SELECT survey_page_id, count(survey_page_id) measure_count, sum(case when measure_compare.measure_id = measure_compare.response then 1 else 0 end) respons_count " 
             +"FROM ( " 
                 +"SELECT all_measures.survey_page_id, all_measures.measure_id, isnull(answered_measures.measure_id, -1) response " 
                 +"FROM( "
@@ -142,7 +142,7 @@ public class SurveyPageRepositoryImpl extends AbstractHibernateRepository<Survey
                     +"WHERE vas.veteran_assessment_id = :veteranAssessmentId " 
                     +"%s"  
                     +"AND m.measure_type_id IN ( " + Measure.COUNTED_MEASURE_TYPES + " ) " 
-                    +"AND isnull(vamv.is_visible, 1) "
+                    +"AND isnull(vamv.is_visible, 1) = 1 "
                     +"GROUP BY spm.survey_page_id, spm.measure_id " 
                 +") all_measures " 
                 +"LEFT OUTER JOIN ( " 
@@ -172,7 +172,7 @@ public class SurveyPageRepositoryImpl extends AbstractHibernateRepository<Survey
                                  /* collect responses grouped by measure and tabular row. Get sum of the number of answers. 
                                     If a row has a 0 then that row had no answer for that measure */
                                 +"0 NOT IN ( "
-                                    +"SELECT isnull( sum(smr2.boolean_value = 1 OR smr2.number_value IS NOT NULL OR smr2.text_value IS NOT NULL), 0) answer_count "
+                                    +"SELECT sum(case when smr2.boolean_value = 1 OR smr2.number_value IS NOT NULL OR smr2.text_value IS NOT NULL then 1 else 0 end) answer_count "
                                     +"FROM survey_measure_response smr2 "
                                     +"INNER JOIN survey s ON smr2.survey_id=s.survey_id "
                                     +"INNER JOIN measure m ON smr2.measure_id=m.measure_id "           
