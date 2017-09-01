@@ -97,7 +97,7 @@ public class SurveyPageRepositoryImpl extends AbstractHibernateRepository<Survey
         
         if(logger.isTraceEnabled()){
             for(Object[] row: result)
-                logger.trace("Survey page ID: " + row[0] + ", has_skip: " + row[1]);
+                logger.info("Survey page ID: " + row[0] + ", has_skip: " + row[1]);
         }
 
         return result;
@@ -173,12 +173,10 @@ public class SurveyPageRepositoryImpl extends AbstractHibernateRepository<Survey
                                     If a row has a 0 then that row had no answer for that measure */
                                 +"0 NOT IN ( "
                                     +"SELECT sum(case when smr2.boolean_value = 1 OR smr2.number_value IS NOT NULL OR smr2.text_value IS NOT NULL then 1 else 0 end) answer_count "
-                                    +"FROM survey_measure_response smr2 "
-                                    +"INNER JOIN survey s ON smr2.survey_id=s.survey_id "
-                                    +"INNER JOIN measure m ON smr2.measure_id=m.measure_id "           
-                                    +"WHERE smr2.veteran_assessment_id = :veteranAssessmentId "           
-                                    +"%s"
-                                    +"AND m.parent_measure_id = spm.measure_id "
+                                    +"FROM measure m "
+                                    +"LEFT JOIN (SELECT * FROM survey_measure_response smr2 WHERE smr2.veteran_assessment_id = :veteranAssessmentId) smr2 " 
+									+"ON smr2.measure_id=m.measure_id "    
+                                    +"WHERE m.parent_measure_id = spm.measure_id "
                                     +"AND m.measure_type_id IN ( " + Measure.COUNTED_MEASURE_TYPES + " ) "
                                     +"GROUP BY smr2.measure_id, smr2.tabular_row ) "
                         +") "
